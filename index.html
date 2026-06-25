@@ -147,9 +147,6 @@ tr.total td { font-weight: 700; border-top: 2px solid var(--cp-border-strong); }
         <p>Model expected consumption revenue for a region based on customers, adoption and the number of CUA agents each customer runs. Pricing is <b>per Cloud PC (VM)</b> — each CUA agent runs on one Cloud PC. Two types: <b>On-demand</b> (PAYG hours only) and <b>Always-available</b> (fixed price/Cloud PC/month + PAYG hours). Prices follow the official FAQ per geography.</p>
       </div>
       <div class="toolbar">
-        <button class="btn" id="presetCons">Conservative</button>
-        <button class="btn active" id="presetBase">Base</button>
-        <button class="btn" id="presetAmb">Aggressive</button>
         <button class="btn" id="themeToggle" title="Light/dark">◐</button>
         <button class="btn accent" id="copyBtn">Copy summary</button>
       </div>
@@ -250,15 +247,6 @@ tr.total td { font-weight: 700; border-top: 2px solid var(--cp-border-strong); }
           <tbody id="bdBody"></tbody>
         </table>
         <div class="note" id="perCust"></div>
-      </div>
-
-      <div class="card" style="margin-bottom:20px">
-        <h2>Scenario comparison</h2>
-        <table id="scenarios">
-          <thead><tr><th>Scenario</th><th>Agents/cust</th><th>Utilization</th><th>Cloud PCs</th><th>Agent rev/year</th><th>Total/year</th></tr></thead>
-          <tbody id="scenBody"></tbody>
-        </table>
-        <div class="note">Conservative = ½ agents/customer &amp; 45% utilization · Base = your current settings · Aggressive = 2× agents/customer &amp; 100% utilization. Region price and fleet mix stay the same.</div>
       </div>
 
       <div class="card">
@@ -390,17 +378,6 @@ function render(){
   document.getElementById("perCust").textContent =
     `≈ ${eur} per year (FX ${state.fx}). ${fmtInt(r.activeCust)} of ${fmtInt(state.customers)} customers adopting (${state.custAdopt}%) · ${fmtInt(r.agents)} Cloud PCs (${fmtInt(r.aaVMs)} always-available, ${fmtInt(r.odVMs)} on-demand) · avg. ${fmtInt(r.hoursPerAgentMonth)} hrs/Cloud PC/month.`;
 
-  const scen = [
-    {name:"Conservative", agentsPer:state.agentsPer*0.5, util:45, base:false},
-    {name:"Base", agentsPer:state.agentsPer, util:state.util, base:true},
-    {name:"Aggressive", agentsPer:state.agentsPer*2, util:100, base:false},
-  ];
-  document.getElementById("scenBody").innerHTML = scen.map(sc=>{
-    const sr = compute({...state, agentsPer:sc.agentsPer, util:sc.util});
-    const cls = sc.base?' class="scen-base"':'';
-    return `<tr><td${cls}>${sc.name}</td><td>${fmtInt(sc.agentsPer)}</td><td>${sc.util}%</td><td>${fmtInt(sr.agents)}</td><td${cls}>${fmtMoney(sr.agentRevYear)}</td><td${cls}>${fmtMoney(sr.totalYear)}</td></tr>`;
-  }).join("");
-
   const maxM = Math.max(...r.monthly,1);
   document.getElementById("bars").innerHTML = r.monthly.map((mv,i)=>{
     const h = Math.max(2,(mv/maxM)*150);
@@ -445,22 +422,13 @@ function setVals(obj){
   });
   render();
 }
-function applyPreset(p){
-  document.querySelectorAll("#presetCons,#presetBase,#presetAmb").forEach(b=>b.classList.remove("active"));
-  if(p==="cons"){ setVals({agentsPer:5,util:10,aaPct:10,adopt:60}); document.getElementById("presetCons").classList.add("active"); }
-  else if(p==="amb"){ setVals({agentsPer:20,util:30,aaPct:40,adopt:100}); document.getElementById("presetAmb").classList.add("active"); }
-  else { setVals({agentsPer:10,util:15,aaPct:25,adopt:100}); document.getElementById("presetBase").classList.add("active"); }
-}
-document.getElementById("presetCons").addEventListener("click",()=>applyPreset("cons"));
-document.getElementById("presetBase").addEventListener("click",()=>applyPreset("base"));
-document.getElementById("presetAmb").addEventListener("click",()=>applyPreset("amb"));
 
 document.getElementById("resetBtn").addEventListener("click",()=>{
   Object.assign(state, DEFAULTS);
   regionSel.value=DEFAULTS.region;
   ids.forEach(k=>{ const r=document.getElementById("r"+cap(k)); const n=document.getElementById("n"+cap(k)); r.value=state[k]; n.value=state[k]; });
   document.getElementById("fx").value=DEFAULTS.fx;
-  applyPreset("base");
+  render();
 });
 
 document.getElementById("themeToggle").addEventListener("click",()=>{
