@@ -235,8 +235,8 @@ tr.total td { font-weight: 700; border-top: 2px solid var(--cp-border-strong); }
     <div>
       <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
         <div class="kpi"><div class="lbl">Total agents / Cloud PCs</div><div class="num" id="kAgents">—</div><div class="sub" id="kAgentsSub"></div></div>
+        <div class="kpi hero"><div class="lbl">Total rev Year 1 (with ramp)</div><div class="num" id="kY1">—</div><div class="sub" id="kY1sub">billed in year 1</div></div>
         <div class="kpi"><div class="lbl">Agent Cloud PC-hours / month</div><div class="num" id="kHours">—</div><div class="sub">at full adoption</div></div>
-        <div class="kpi hero"><div class="lbl">W365A revenue / year</div><div class="num" id="kAgentRev">—</div><div class="sub">run-rate, full adoption</div></div>
       </div>
 
       <div class="card" style="margin-bottom:20px">
@@ -254,8 +254,7 @@ tr.total td { font-weight: 700; border-top: 2px solid var(--cp-border-strong); }
           <div class="bars" id="bars"></div>
           <div class="axis"><span>M1</span><span>M6</span><span>M12</span></div>
         </div>
-        <div class="kpis" style="margin-top:22px;margin-bottom:0">
-          <div class="kpi"><div class="lbl">Total rev Year 1 (with ramp)</div><div class="num" id="kY1">—</div><div class="sub" id="kY1sub">billed in year 1</div></div>
+        <div class="kpis" style="margin-top:22px;margin-bottom:0;grid-template-columns:repeat(3,1fr)">
           <div class="kpi"><div class="lbl">Yearly run-rate after year 1</div><div class="num" id="kExit">—</div><div class="sub">month 12 × 12</div></div>
           <div class="kpi"><div class="lbl">Per customer / year</div><div class="num" id="kPerCust">—</div><div class="sub">per active customer</div></div>
           <div class="kpi"><div class="lbl">Per Cloud PC / month</div><div class="num" id="kPerAgent">—</div><div class="sub">avg all-in</div></div>
@@ -361,7 +360,6 @@ function render(){
   document.getElementById("kAgents").textContent = fmtInt(r.agents);
   document.getElementById("kAgentsSub").textContent = fmtInt(r.activeCust)+" active customers · "+fmtInt(r.aaVMs)+" AA / "+fmtInt(r.odVMs)+" OD";
   document.getElementById("kHours").textContent = fmtInt(r.cpHoursMonth);
-  document.getElementById("kAgentRev").textContent = fmtMoney(r.agentRevYear);
 
   let rows = [];
   rows.push(["Hourly consumption (PAYG, all Cloud PCs)", fmtInt(r.cpHoursMonth)+" hrs/mo", fmtFull(r.hourlyRevMonth), fmtFull(r.hourlyRevMonth*12)]);
