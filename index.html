@@ -144,7 +144,7 @@ tr.total td { font-weight: 700; border-top: 2px solid var(--cp-border-strong); }
     <div class="topbar">
       <div>
         <h1>Windows 365 for Agents — Regional Revenue Calculator <span class="pill" id="pricePill">EU/UK · $0.52/hr</span></h1>
-        <p>Model expected consumption revenue for a region based on customers, agents/Cloud PCs, employees and their ratio. Pricing is <b>per Cloud PC (VM)</b>, not per user. Two types: <b>On-demand</b> (PAYG hours only) and <b>Always-available</b> (fixed price/Cloud PC/month + PAYG hours). Prices follow the official FAQ per geography.</p>
+        <p>Model expected consumption revenue for a region based on customers, adoption and the number of CUA agents each customer runs. Pricing is <b>per Cloud PC (VM)</b> — each CUA agent runs on one Cloud PC. Two types: <b>On-demand</b> (PAYG hours only) and <b>Always-available</b> (fixed price/Cloud PC/month + PAYG hours). Prices follow the official FAQ per geography.</p>
       </div>
       <div class="toolbar">
         <button class="btn" id="presetCons">Conservative</button>
@@ -181,20 +181,14 @@ tr.total td { font-weight: 700; border-top: 2px solid var(--cp-border-strong); }
         <div class="row"><input type="range" id="rCustomers" min="1" max="500" step="1" value="50"><input type="number" id="nCustomers" value="50"></div>
       </div>
       <div class="field">
-        <label>Avg. employees (users) per customer <span class="val" id="vUsers">2,000</span></label>
-        <div class="row"><input type="range" id="rUsers" min="50" max="50000" step="50" value="2000"><input type="number" id="nUsers" value="2000"></div>
+        <label>CUA agents per customer <span class="val" id="vAgentsPer">100</span></label>
+        <div class="row"><input type="range" id="rAgentsPer" min="1" max="2000" step="1" value="100"><input type="number" id="nAgentsPer" value="100"></div>
+        <div class="hint">Number of Computer-Using Agents (each = one Cloud PC) an adopting customer runs.</div>
       </div>
       <div class="field">
         <label>Customers adopting W365A <span class="val" id="vCustAdopt">40%</span></label>
         <div class="row"><input type="range" id="rCustAdopt" min="1" max="100" step="1" value="40"><input type="number" id="nCustAdopt" value="40"></div>
         <div class="hint">Share of regional customers that actually deploy W365 for Agents. Scales the active base and trial credit.</div>
-      </div>
-
-      <h3>Agent ↔ user ratio</h3>
-      <div class="field">
-        <label>Agents (Cloud PCs) per 100 employees <span class="val" id="vRatio">5</span></label>
-        <div class="row"><input type="range" id="rRatio" min="0.5" max="50" step="0.5" value="5"><input type="number" id="nRatio" value="5" step="0.5"></div>
-        <div class="hint">Sizes the agent fleet. 5 = 1 agent Cloud PC per 20 employees.</div>
       </div>
 
       <h3>Fleet mix</h3>
@@ -262,10 +256,10 @@ tr.total td { font-weight: 700; border-top: 2px solid var(--cp-border-strong); }
       <div class="card" style="margin-bottom:20px">
         <h2>Scenario comparison</h2>
         <table id="scenarios">
-          <thead><tr><th>Scenario</th><th>Agents/100</th><th>Utilization</th><th>Cloud PCs</th><th>Agent rev/year</th><th>Total/year</th></tr></thead>
+          <thead><tr><th>Scenario</th><th>Agents/cust</th><th>Utilization</th><th>Cloud PCs</th><th>Agent rev/year</th><th>Total/year</th></tr></thead>
           <tbody id="scenBody"></tbody>
         </table>
-        <div class="note">Conservative = ½ agent ratio &amp; 45% utilization · Base = your current settings · Aggressive = 2× agent ratio &amp; 100% utilization. Region price and fleet mix stay the same.</div>
+        <div class="note">Conservative = ½ agents/customer &amp; 45% utilization · Base = your current settings · Aggressive = 2× agents/customer &amp; 100% utilization. Region price and fleet mix stay the same.</div>
       </div>
 
       <div class="card">
@@ -308,10 +302,10 @@ const TRIAL_HOURS = 50;
 
 const DEFAULTS = {
   region:"Europe / United Kingdom", hourly:0.52, aaMonthly:6.5,
-  customers:50, users:2000, custAdopt:40, ratio:5, aaPct:25, hours:8, days:22, util:70,
+  customers:50, agentsPer:100, custAdopt:40, aaPct:25, hours:8, days:22, util:70,
   adopt:100, incTrial:true, fx:0.92
 };
-const ids = ["hourly","aaMonthly","customers","users","custAdopt","ratio","aaPct","hours","days","util","adopt"];
+const ids = ["hourly","aaMonthly","customers","agentsPer","custAdopt","aaPct","hours","days","util","adopt"];
 const state = {...DEFAULTS};
 
 function fmtInt(n){ return Math.round(n).toLocaleString(LOC); }
@@ -327,7 +321,7 @@ function fmtFull(n){ return "$"+Math.round(n).toLocaleString(LOC); }
 
 function compute(s){
   const activeCust = s.customers * (s.custAdopt/100);
-  const agentsPerCust = s.users * (s.ratio/100);
+  const agentsPerCust = s.agentsPer;
   const agents = activeCust * agentsPerCust;
   const aaVMs = agents * (s.aaPct/100);
   const odVMs = agents - aaVMs;
@@ -367,9 +361,8 @@ function render(){
   document.getElementById("vHourly").textContent = state.hourly.toLocaleString(LOC,{minimumFractionDigits:2,maximumFractionDigits:3});
   document.getElementById("vAaMonthly").textContent = state.aaMonthly.toLocaleString(LOC,{minimumFractionDigits:2,maximumFractionDigits:2});
   document.getElementById("vCustomers").textContent = fmtInt(state.customers);
-  document.getElementById("vUsers").textContent = fmtInt(state.users);
+  document.getElementById("vAgentsPer").textContent = fmtInt(state.agentsPer);
   document.getElementById("vCustAdopt").textContent = state.custAdopt+"%";
-  document.getElementById("vRatio").textContent = state.ratio;
   document.getElementById("vAaPct").textContent = state.aaPct+"%";
   document.getElementById("vHours").textContent = state.hours;
   document.getElementById("vDays").textContent = state.days;
@@ -400,14 +393,14 @@ function render(){
     `≈ ${eur} per year (FX ${state.fx}). ${fmtInt(r.activeCust)} of ${fmtInt(state.customers)} customers adopting (${state.custAdopt}%) · ${fmtInt(r.agents)} Cloud PCs (${fmtInt(r.aaVMs)} always-available, ${fmtInt(r.odVMs)} on-demand) · avg. ${fmtInt(r.hoursPerAgentMonth)} hrs/Cloud PC/month.`;
 
   const scen = [
-    {name:"Conservative", ratio:state.ratio*0.5, util:45, base:false},
-    {name:"Base", ratio:state.ratio, util:state.util, base:true},
-    {name:"Aggressive", ratio:state.ratio*2, util:100, base:false},
+    {name:"Conservative", agentsPer:state.agentsPer*0.5, util:45, base:false},
+    {name:"Base", agentsPer:state.agentsPer, util:state.util, base:true},
+    {name:"Aggressive", agentsPer:state.agentsPer*2, util:100, base:false},
   ];
   document.getElementById("scenBody").innerHTML = scen.map(sc=>{
-    const sr = compute({...state, ratio:sc.ratio, util:sc.util});
+    const sr = compute({...state, agentsPer:sc.agentsPer, util:sc.util});
     const cls = sc.base?' class="scen-base"':'';
-    return `<tr><td${cls}>${sc.name}</td><td>${sc.ratio.toLocaleString(LOC,{maximumFractionDigits:1})}</td><td>${sc.util}%</td><td>${fmtInt(sr.agents)}</td><td${cls}>${fmtMoney(sr.agentRevYear)}</td><td${cls}>${fmtMoney(sr.totalYear)}</td></tr>`;
+    return `<tr><td${cls}>${sc.name}</td><td>${fmtInt(sc.agentsPer)}</td><td>${sc.util}%</td><td>${fmtInt(sr.agents)}</td><td${cls}>${fmtMoney(sr.agentRevYear)}</td><td${cls}>${fmtMoney(sr.totalYear)}</td></tr>`;
   }).join("");
 
   const maxM = Math.max(...r.monthly,1);
@@ -457,9 +450,9 @@ function setVals(obj){
 }
 function applyPreset(p){
   document.querySelectorAll("#presetCons,#presetBase,#presetAmb").forEach(b=>b.classList.remove("active"));
-  if(p==="cons"){ setVals({ratio:2,util:45,aaPct:10,adopt:60}); document.getElementById("presetCons").classList.add("active"); }
-  else if(p==="amb"){ setVals({ratio:10,util:100,aaPct:40,adopt:100}); document.getElementById("presetAmb").classList.add("active"); }
-  else { setVals({ratio:5,util:70,aaPct:25,adopt:100}); document.getElementById("presetBase").classList.add("active"); }
+  if(p==="cons"){ setVals({agentsPer:40,util:45,aaPct:10,adopt:60}); document.getElementById("presetCons").classList.add("active"); }
+  else if(p==="amb"){ setVals({agentsPer:200,util:100,aaPct:40,adopt:100}); document.getElementById("presetAmb").classList.add("active"); }
+  else { setVals({agentsPer:100,util:70,aaPct:25,adopt:100}); document.getElementById("presetBase").classList.add("active"); }
 }
 document.getElementById("presetCons").addEventListener("click",()=>applyPreset("cons"));
 document.getElementById("presetBase").addEventListener("click",()=>applyPreset("base"));
@@ -484,7 +477,7 @@ document.getElementById("copyBtn").addEventListener("click",()=>{
   const txt =
 `Windows 365 for Agents — regional revenue estimate (${state.region})
 Price (FAQ): $${state.hourly}/Cloud PC/hr · $${state.aaMonthly}/Cloud PC/month (always-available)
-Assumptions: ${fmtInt(state.customers)} customers · ${state.custAdopt}% adopting (${fmtInt(r.activeCust)} active) · ${fmtInt(state.users)} employees/customer · ${state.ratio} agents/100 emp. · ${state.aaPct}% always-available · ${state.hours}h/day × ${state.days} days × ${state.util}% util
+Assumptions: ${fmtInt(state.customers)} customers · ${state.custAdopt}% adopting (${fmtInt(r.activeCust)} active) · ${fmtInt(state.agentsPer)} CUA agents/customer · ${state.aaPct}% always-available · ${state.hours}h/day × ${state.days} days × ${state.util}% util
 Cloud PCs: ${fmtInt(r.agents)} (${fmtInt(r.aaVMs)} always-available, ${fmtInt(r.odVMs)} on-demand)
 Cloud PC-hours/month: ${fmtInt(r.cpHoursMonth)}
 Hourly consumption/year: ${fmtFull(r.hourlyRevMonth*12)}
